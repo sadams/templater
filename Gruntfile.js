@@ -25,11 +25,9 @@ module.exports = function(grunt) {
         },
         uglify: {
             options: {
-                banner: '/*! Templater v<%= pkg.version %> <%= grunt.template.today("dd-mm-yyyy") %> */\n',
-                browser: true,
-                globals: {
-                    jQuery: true
-                }
+                banner: '/*! <%= pkg.name %> v<%= pkg.version %> <%= grunt.template.today("dd-mm-yyyy") %> ' +
+                    '<%= pkg.repository %> <%= pkg.authors %> */\n',
+                browser: true
             },
             dist: {
                 files: {
