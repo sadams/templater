@@ -1,0 +1,31 @@
+{
+  "name": "templater",
+  "main": "dist/Templater.min.js",
+  "version": "0.0.0",
+  "authors": [
+    "Sam Adams <adams.sam@gmail.com>"
+  ],
+  "description": "promise based template resolving engine with filesystem support",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "templating",
+    "templates",
+    "templater"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.1",
+    "underscore": "~1.6.0",
+    "q": "1.0.1",
+    "qunit": "~1.14.0"
+  }
+}

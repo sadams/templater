@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+
+    <link rel="stylesheet" type="text/css" href="../libs/qunit/qunit/qunit.css"/>
+
+    <script src="../libs/q/q.js"></script>
+    <script src="../libs/jquery/dist/jquery.js"></script>
+    <script src="../libs/underscore/underscore.js"></script>
+    <script src="../libs/qunit/qunit/qunit.js"></script>
+    <script src="../dist/Templater.min.js"></script>
+
+    <script>
+        var TEMPLATE_URL_MULTIPLE = "./templates/multiple.html.tmpl";
+        var TEMPLATE_URL_SINGULAR = "./templates/singular.html.tmpl";
+
+        function assertTemplate(assert, template, values, expected) {
+            if (!template) {
+                return assert.fail('no template passed');
+            } else {
+                var actual = template(values);
+                return assert.equal(actual, expected, 'invalid template');
+            }
+        }
+
+        QUnit.asyncTest( "from multiple ajax template", function( assert ) {
+            expect( 1 );
+            var templater = new Templater(
+                    {
+                        noCompile:false,
+                        templates:[
+                            {
+                                type:"multiple",
+                                sections:[{
+                                    selector:"#my-template",
+                                    name:"tmplataroo"
+                                },{
+                                    selector:"#my-other-template",
+                                    name:"othertempl"
+                                }],
+                                path:TEMPLATE_URL_MULTIPLE
+                            }
+                        ]
+                    }
+            );
+            templater.getTemplate('othertempl').then(function(template){
+                var expected = '\nbarbar multiple two\n';
+                var values = {multipleOther:'barbar'};
+                assertTemplate(assert, template, values, expected);
+                QUnit.start();
+            });
+        });
+
+        QUnit.asyncTest( "from singular ajax template", function( assert ) {
+            expect( 1 );
+            var templater = new Templater(
+                    {
+                        templates:[
+                            {
+                                type:"singular",
+                                name:"standard",
+                                path:TEMPLATE_URL_SINGULAR
+                            }
+                        ]
+                    }
+            );
+            templater.getTemplate('standard').then(function(template){
+                var values = {single:'bing',templatesingle:'bang'};
+                var expected = 'bing foo bar\nbang fooo';
+                assertTemplate(assert, template, values, expected);
+                QUnit.start();
+            });
+        });
+
+        QUnit.asyncTest( "from singular inline", function( assert ) {
+            expect( 1 );
+            var templater = new Templater(
+                    {
+                        templates:[
+                            {
+                                type:"singular",
+                                name:"paragraph",
+                                template:"<p><%= value %></p>"
+                            }
+                        ]
+                    }
+            );
+            templater.getTemplate('paragraph').then(function(template){
+                var expected = '<p>barbar</p>';
+                var values = {value:'barbar'};
+                assertTemplate(assert, template, values, expected);
+                QUnit.start();
+            });
+        });
+
+        QUnit.asyncTest( "overlapping multi singular", function( assert ) {
+            expect( 1 );
+            var templater = new Templater(
+                    {
+                        templates:[
+                            {
+                                type:"multiple",
+                                sections:[{
+                                    selector:"#my-other-template",
+                                    name:"othertempl"
+                                }],
+                                path:TEMPLATE_URL_MULTIPLE
+                            },
+                            {
+                                type:"singular",
+                                name:"othertempl",
+                                path:"./templates/alternative.html.tmpl"
+                            }
+                        ]
+                    }
+            );
+            templater.getTemplate('othertempl').then(function(template){
+                var values = {multipleOther:'ERN'};
+                var expected = 'ALTERNATIVE\n<p>FOOOOOO</p>';
+                assertTemplate(assert, template, values, expected);
+                QUnit.start();
+            });
+        });
+
+        QUnit.asyncTest( "multi with alternative", function( assert ) {
+            expect( 1 );
+            var templater = new Templater(
+                    {
+                        templates:[
+                            {
+                                type:"multiple",
+                                sections:[{
+                                    selector:"#my-other-template",
+                                    name:"othertempl"
+                                }],
+                                path:TEMPLATE_URL_MULTIPLE
+                            }
+                        ]
+                    }
+            );
+            var alternativeTemplates = [
+                {
+                    type:"singular",
+                    name:"othertempl",
+                    path:"./templates/alternative.html.tmpl"
+                }
+            ];
+            templater.getTemplate('othertempl', alternativeTemplates).then(function(template){
+                var values = {multipleOther:'ERN'};
+                var expected = 'ALTERNATIVE\n<p>FOOOOOO</p>';
+                assertTemplate(assert, template, values, expected);
+                QUnit.start();
+            });
+        });
+
+        QUnit.asyncTest( "get multiple templates", function( assert ) {
+            expect( 3 );
+            var templater = new Templater(
+                    {
+                        templates:[
+                            {
+                                type:"singular",
+                                name:"standard",
+                                path:TEMPLATE_URL_SINGULAR
+                            },
+                            {
+                                type:"multiple",
+                                sections:[{
+                                    selector:"#my-template",
+                                    name:"tmplataroo"
+                                },{
+                                    selector:"#my-other-template",
+                                    name:"othertempl"
+                                }],
+                                path:TEMPLATE_URL_MULTIPLE
+                            }
+                        ]
+                    }
+            );
+            Q.all([
+                templater.getTemplate('othertempl'),
+                templater.getTemplate('tmplataroo'),
+                templater.getTemplate('standard')
+            ]).then(function(results) {
+                //othertempl
+                assertTemplate(
+                    assert,
+                    results[0],
+                    {multipleOther:'barbar'},
+                    '\nbarbar multiple two\n'
+                );
+
+                //templataroo
+                assertTemplate(
+                    assert,
+                    results[1],
+                    {multipleOne:'barbar'},
+                    '\nbarbar multiple one\n'
+                );
+
+                //standard
+                assertTemplate(
+                    assert,
+                    results[2],
+                    {single:'bing',templatesingle:'bang'},
+                    'bing foo bar\nbang fooo'
+                );
+
+                QUnit.start();
+            });
+        });
+
+        QUnit.asyncTest( "cache works", function( assert ) {
+            expect( 2 );
+
+            var requestCount = 0;
+
+            $.ajaxSetup({
+                beforeSend: function() {
+                    requestCount++;
+                }
+            });
+
+            var templater = new Templater(
+                    {
+                        cacheRequests:true,
+                        templates:[
+                            {
+                                type:"singular",
+                                name:"standard",
+                                path:TEMPLATE_URL_SINGULAR
+                            },
+                            {
+                                type:"multiple",
+                                sections:[{
+                                    selector:"#my-other-template",
+                                    name:"othertempl"
+                                }],
+                                path:TEMPLATE_URL_MULTIPLE
+                            }
+                        ]
+                    }
+            );
+            Q.all([
+                templater.getTemplate('othertempl'),
+                templater.getTemplate('standard'),
+                templater.getTemplate('standard'),
+                templater.getTemplate('othertempl')
+            ]).then(function(results) {
+                assert.equal(requestCount, 2, 'not caching requests');
+                assert.equal(results.length, 4, 'caching break results');
+                $.ajaxSetup({
+                    beforeSend: function() {}
+                });
+                QUnit.start();
+            });
+        });
+
+        function _cacheTest(assert, cache, expectedRequestsCount) {
+            expect( 2 );
+
+            var requestCount = 0;
+
+            $.ajaxSetup({
+                beforeSend: function() {
+                    requestCount++;
+                }
+            });
+
+            var templater = new Templater(
+                    {
+                        cacheRequests:cache,
+                        templates:[
+                            {
+                                type:"singular",
+                                name:"standard",
+                                path:TEMPLATE_URL_SINGULAR
+                            },
+                            {
+                                type:"multiple",
+                                sections:[{
+                                    selector:"#my-other-template",
+                                    name:"othertempl"
+                                }],
+                                path:TEMPLATE_URL_MULTIPLE
+                            }
+                        ]
+                    }
+            );
+            Q.all([
+                templater.getTemplate('othertempl'),
+                templater.getTemplate('standard'),
+                templater.getTemplate('standard'),
+                templater.getTemplate('othertempl')
+            ]).then(function(results) {
+                assert.equal(requestCount, expectedRequestsCount, 'not caching requests');
+                assert.equal(results.length, 4, 'wrong number of templates');
+                $.ajaxSetup({
+                    beforeSend: function() {}
+                });
+                QUnit.start();
+            });
+        }
+
+        QUnit.asyncTest( "cache works", function(assert){
+            _cacheTest(assert, true, 2);
+        });
+
+        QUnit.asyncTest( "cache on by default", function(assert){
+            _cacheTest(assert, undefined, 2);
+        });
+
+        QUnit.asyncTest( "no-cache works", function(assert){
+            _cacheTest(assert, false, 8);
+        });
+
+    </script>
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture"></div>
+</body>
+</html>
