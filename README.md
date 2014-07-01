@@ -34,73 +34,68 @@ or in the browser:
 
 ## examples
 
-Assuming you have two template files in a templates directory:
+Assuming you have two template files in a templates directory, one which holds multiple templates (e.g. templates 'a' and 'b' in `./templates/multiple.html.tmpl`) separated by dom elements:
+```
+<script id="my-template">
+<%= multipleOne %> multiple one
+</script>
 
- 1. holds multiple templates (e.g. templates 'a' and 'b') separated by dom elements
+<script id="my-other-template">
+<%= multipleOther %> multiple two
+</script>
+```
 
+And another with 1 template in it as an override for template 'b' (in `./templates/singular.html.tmpl`):
+```
+<%= single %> foo bar
+<%= templatesingle %> fooo
+```
 
-    ./templates/multiple.html.tmpl
+Then you can setup which templates are where on construction and use promise based api to `getTemplate` by name (`./index.html`): 
 
-    <script id="my-template">
-    <%= multipleOne %> multiple one
+```
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="../libs/jquery/dist/jquery.js"></script>
+    <script src="../libs/underscore/underscore.js"></script>
+    <script src="../libs/q/q.js"></script>
+    <script src="../dist/Templater.min.js"></script>
+    <script>
+        var templater = new Templater(
+               {
+                   templates:[
+                       {
+                           type:"multiple",
+                           sections:[{
+                               selector:"#my-template",
+                               name:"templateOne"
+                           },{
+                               selector:"#my-other-template",
+                               name:"othertempl"
+                           }],
+                           path:"./templates/multiple.html.tmpl"
+                       },
+                       {
+                           type:"singular",
+                           name:"othertempl",
+                           path:"./templates/alternative.html.tmpl"
+                       }
+                   ]
+               }
+           );
+           templater.getTemplate('othertempl').then(function(template){
+               $('body').append(template({multipleOther:'ERN'}));
+               // will output: 'ALTERNATIVE\n<p>FOOOOOO</p>'
+           }).then(templater.getTemplate('templateOne')).then(function(template){
+               $('body').append(template({multipleOne:'foo'}));
+               // will output: 'foo multiple one'
+           });
     </script>
-    
-    <script id="my-other-template">
-    <%= multipleOther %> multiple two
-    </script>
-
- 2. another with one template in it as an override for template 'b'
-
-
-    ./templates/singular.html.tmpl
-
-    <%= single %> foo bar
-    <%= templatesingle %> fooo
-
-Then you can setup which templates are where on construction and use promise based api to `getTemplate` by name: 
-
-    ./index.html
-
-    <!DOCTYPE html>
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title></title>
-        <script src="../libs/jquery/dist/jquery.js"></script>
-        <script src="../libs/underscore/underscore.js"></script>
-        <script src="../libs/q/q.js"></script>
-        <script src="../dist/Templater.min.js"></script>
-        <script>
-            var templater = new Templater(
-                   {
-                       templates:[
-                           {
-                               type:"multiple",
-                               sections:[{
-                                   selector:"#my-template",
-                                   name:"templateOne"
-                               },{
-                                   selector:"#my-other-template",
-                                   name:"othertempl"
-                               }],
-                               path:"./templates/multiple.html.tmpl"
-                           },
-                           {
-                               type:"singular",
-                               name:"othertempl",
-                               path:"./templates/alternative.html.tmpl"
-                           }
-                       ]
-                   }
-               );
-               templater.getTemplate('othertempl').then(function(template){
-                   $('body').append(template({multipleOther:'ERN'}));
-                   // will output: 'ALTERNATIVE\n<p>FOOOOOO</p>'
-               }).then(templater.getTemplate('templateOne')).then(function(template){
-                   $('body').append(template({multipleOne:'foo'}));
-               });
-        </script>
-    </head>
-    <body>
-    </body>
-    </html>
+</head>
+<body>
+</body>
+</html>
+```
