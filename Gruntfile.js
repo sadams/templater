@@ -25,18 +25,38 @@ module.exports = function(grunt) {
         },
         uglify: {
             options: {
-                banner: '/*! Templater v<%= pkg.version %> <%= grunt.template.today("dd-mm-yyyy") %> */\n',
-                browser: true,
-                globals: {
-                    jQuery: true
-                }
+                banner: '/*! <%= pkg.name %> v<%= pkg.version %> <%= grunt.template.today("dd-mm-yyyy") %> ' +
+                    '<%= pkg.repository %> <%= pkg.authors %> */\n',
+                browser: true
             },
             dist: {
                 files: {
                     'dist/Templater.min.js': ['src/Templater.js']
                 }
             }
+        },
+        wiredep: {
+
+            target: {
+
+                // Point to the files that should be updated when
+                // you run `grunt wiredep`
+                src: [
+                    'test/**/*.html',   // .html support...
+                ],
+
+                // Optional:
+                // ---------
+                cwd: '',
+                dependencies: true,
+                devDependencies: true,
+                exclude: [],
+                fileTypes: {},
+                ignorePath: '',
+                overrides: {}
+            }
         }
+
     });
 
     // Load the plugin that provides the "uglify" task.
@@ -44,9 +64,10 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-qunit');
     grunt.loadNpmTasks('grunt-contrib-connect');
+    grunt.loadNpmTasks('grunt-wiredep');
 
     // Default task(s).
-    grunt.registerTask('test', ['connect','qunit']);
+    grunt.registerTask('test', ['wiredep','connect','qunit']);
     grunt.registerTask('build', ['jshint','uglify']);
     grunt.registerTask('default', ['build','test']);
 
