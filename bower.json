@@ -1,11 +1,11 @@
 {
   "name": "templater",
   "main": "dist/Templater.min.js",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "authors": [
     "Sam Adams <adams.sam@gmail.com>"
   ],
-  "description": "promise based template resolving engine with filesystem support",
+  "description": "promise based, ajax template resolving engine",
   "moduleType": [
     "globals",
     "amd",
@@ -20,14 +20,15 @@
   "ignore": [
     "**/.*",
     "node_modules",
-    "bower_components",
-    "test",
-    "tests"
+    "libs",
+    "test"
   ],
   "dependencies": {
     "jquery": "~2.1.1",
     "underscore": "~1.6.0",
-    "q": "1.0.1",
+    "q": "1.0.1"
+  },
+  "devDependencies": {
     "qunit": "~1.14.0"
   }
 }
